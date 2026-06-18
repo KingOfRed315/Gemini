@@ -10,7 +10,7 @@ app.use(express.json());
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY; 
 
 // Endpoint chính thức chuẩn REST của Google dành cho mẫu gemini-1.5-flash
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
 
 app.get('/', (req, res) => {
     res.send("Server AI đang chạy tốt!");
