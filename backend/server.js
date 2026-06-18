@@ -13,7 +13,7 @@ app.use(cors({
 app.use(express.json());
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY; 
-const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash/generateContent?key=${GEMINI_API_KEY}`;
 
 // Thêm một đường dẫn GET để kiểm tra xem server sống hay chết
 app.get('/', (req, res) => {
