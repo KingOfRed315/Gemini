@@ -2,22 +2,16 @@ const express = require('express');
 const cors = require('cors');
 
 const app = express();
-
-// Cấu hình CORS mở rộng để tránh bị chặn request từ Vercel
-app.use(cors({
-    origin: '*',
-    methods: ['POST', 'GET'],
-    allowedHeaders: ['Content-Type']
-})); 
-
+app.use(cors({ origin: '*' })); 
 app.use(express.json());
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY; 
-const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash/generateContent?key=${GEMINI_API_KEY}`;
 
-// Thêm một đường dẫn GET để kiểm tra xem server sống hay chết
+// Sử dụng đúng endpoint chuẩn hóa của model gemini-pro ổn định nhất cho URL thuần
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+
 app.get('/', (req, res) => {
-    res.send("Server AI đang hoạt động bình thường!");
+    res.send("Server đang chạy tốt!");
 });
 
 app.post('/api/chat', async (req, res) => {
@@ -25,7 +19,7 @@ app.post('/api/chat', async (req, res) => {
         const { message } = req.body;
 
         if (!GEMINI_API_KEY) {
-            return res.status(500).json({ reply: "Lỗi: Chưa cấu hình GEMINI_API_KEY trên Render." });
+            return res.status(500).json({ reply: "Lỗi: Chưa nhận được API Key trên Render." });
         }
 
         const response = await fetch(API_URL, {
@@ -34,25 +28,32 @@ app.post('/api/chat', async (req, res) => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: message }] }]
+                contents: [{
+                    parts: [{ text: message }]
+                }]
             })
         });
         
         const data = await response.json();
         
-        // Kiểm tra nếu Google trả về cấu trúc lỗi
         if (data.error) {
-            console.error("Google API Error:", data.error);
-            return res.status(400).json({ reply: `Lỗi từ Google: ${data.error.message}` });
+            console.error("Google Error:", data.error);
+            return res.status(400).json({ reply: `Google báo lỗi: ${data.error.message}` });
         }
 
-        const aiResponse = data.candidates[0].content.parts[0].text;
-        res.json({ reply: aiResponse });
+        if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts) {
+            const aiResponse = data.candidates[0].content.parts[0].text;
+            return res.json({ reply: aiResponse });
+        } else {
+            console.error("Cấu trúc trả về lạ:", data);
+            return res.json({ reply: "Không nhận được phản hồi đúng cấu trúc từ AI." });
+        }
+
     } catch (error) {
         console.error("System Error:", error);
-        res.status(500).json({ reply: "Lỗi hệ thống Backend không thể xử lý tin nhắn." });
+        res.status(500).json({ reply: "Lỗi hệ thống Backend không thể kết nối." });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server đang chạy ở cổng ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
